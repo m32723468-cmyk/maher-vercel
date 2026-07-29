@@ -80,6 +80,22 @@
   .empty{ text-align:center; padding:60px 20px; color:var(--lilac-dim); }
   .empty .big{ font-family:var(--head); font-size:20px; color:var(--lilac-soft); margin-bottom:6px; }
 
+  /* إضافات: إحصاءات البرامج، نسخ، حذف، تنبيه */
+  .prog-stats{ display:flex; flex-wrap:wrap; gap:10px; margin:0 0 18px; }
+  .prog-chip{ display:flex; align-items:center; gap:8px; background:var(--glass); border:1px solid var(--line);
+    border-radius:12px 3px 12px 3px; padding:9px 14px; font-size:13px; }
+  .prog-chip b{ color:#fff; }
+  .prog-chip .num{ color:var(--v-400); font-weight:700; }
+  td.copy{ cursor:pointer; }
+  td.copy:hover{ color:#fff; text-decoration:underline; }
+  .del-btn{ background:transparent; border:1px solid var(--line); color:var(--female); cursor:pointer;
+    border-radius:8px; padding:5px 11px; font-size:12px; font-family:var(--body); transition:all .2s ease; }
+  .del-btn:hover{ background:rgba(243,169,208,.15); border-color:var(--female); }
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:var(--lilac); color:var(--v-700); padding:11px 20px; border-radius:12px; font-size:13.5px;
+    font-weight:700; transition:all .3s ease; z-index:80; pointer-events:none; box-shadow:0 10px 30px rgba(0,0,0,.3); }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
   /* شاشة المفتاح */
   .gate{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
     background:radial-gradient(120% 130% at 50% 40%,#4d2c7e,#22143d); padding:20px; }
@@ -148,6 +164,8 @@
     <div class="stat"><div class="n" id="stToday">0</div><div class="l">تسجيلات اليوم</div></div>
   </div>
 
+  <div class="prog-stats" id="progStats"></div>
+
   <div class="toolbar">
     <div class="tabs">
       <button class="tab on" data-g="all">الكل <span class="c" id="cAll">0</span></button>
@@ -160,6 +178,12 @@
         <option value="فتية">فتية</option>
         <option value="المراقي">المراقي</option>
         <option value="بناء المقرئ">بناء المقرئ</option>
+      </select>
+      <select id="batchFilter">
+        <option value="">كل الدفعات</option>
+        <option value="الدفعة الأولى">الدفعة الأولى</option>
+        <option value="الدفعة الثانية">الدفعة الثانية</option>
+        <option value="الدفعة الثالثة">الدفعة الثالثة</option>
       </select>
     </div>
     <div class="search"><input id="searchInput" type="search" placeholder="بحث بالاسم أو البريد أو الهاتف أو المدينة…"></div>
@@ -179,6 +203,7 @@
           <th>الهاتف</th>
           <th class="hide-sm">البريد</th>
           <th class="hide-sm">التاريخ</th>
+          <th></th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -189,6 +214,8 @@
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 /* ============================================================
@@ -259,9 +286,10 @@ if (sessionStorage.getItem('maherAuthed') === '1') load();
 
 /* --- التصفية + العرض --- */
 $('refreshBtn').addEventListener('click', load);
-$('exportBtn').addEventListener('click', exportCSV);
+$('exportBtn').addEventListener('click', exportExcel);
 $('searchInput').addEventListener('input', render);
 $('programFilter').addEventListener('change', render);
+$('batchFilter').addEventListener('change', render);
 document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click', ()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
@@ -274,9 +302,11 @@ document.querySelectorAll('.tab').forEach(t=>{
 function currentRows(){
   const q = $('searchInput').value.trim().toLowerCase();
   const prog = $('programFilter').value;
+  const batch = $('batchFilter').value;
   return ALL.filter(r=>{
     if (filterGender !== 'all' && r.gender !== filterGender) return false;
     if (prog && r.program !== prog) return false;
+    if (batch && r.batch !== batch) return false;
     if (q){
       const hay = [r.first_name,r.last_name,r.email,r.phone,r.city,r.country].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
@@ -302,6 +332,12 @@ function render(){
   $('barM').style.width = (males/tot*100)+'%';
   $('barF').style.width = (females/tot*100)+'%';
 
+  // إحصاءات حسب البرنامج
+  const progs = {};
+  ALL.forEach(r=>{ const p=r.program||'غير محدد'; progs[p]=(progs[p]||0)+1; });
+  $('progStats').innerHTML = Object.keys(progs).map(p=>
+    `<div class="prog-chip"><b>${esc(p)}</b><span class="num">${progs[p]}</span></div>`).join('');
+
   const rows = currentRows();
   const tb = $('tbody');
   tb.innerHTML = '';
@@ -318,29 +354,71 @@ function render(){
       <td class="hide-sm">${esc(r.program||'')}</td>
       <td class="hide-sm">${esc(r.batch||'')}</td>
       <td class="hide-sm">${esc(r.country||'')} — ${esc(r.city||'')}</td>
-      <td class="ltr">${esc(r.phone||'')}</td>
-      <td class="hide-sm ltr">${esc(r.email||'')}</td>
-      <td class="hide-sm">${fmtDate(r.created_at)}</td>`;
+      <td class="ltr copy" data-copy="${esc(r.phone||'')}" title="نسخ">${esc(r.phone||'')}</td>
+      <td class="hide-sm ltr copy" data-copy="${esc(r.email||'')}" title="نسخ">${esc(r.email||'')}</td>
+      <td class="hide-sm">${fmtDate(r.created_at)}</td>
+      <td><button class="del-btn" data-del="${r.id}">حذف</button></td>`;
     tb.appendChild(tr);
   });
+
+  // نسخ بالضغط
+  tb.querySelectorAll('.copy').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const v = c.dataset.copy || '';
+      if(!v) return;
+      navigator.clipboard?.writeText(v).then(()=>toast('تم النسخ: '+v));
+    });
+  });
+  // حذف مسجّل
+  tb.querySelectorAll('.del-btn').forEach(b=>{
+    b.addEventListener('click', ()=>delRow(b.dataset.del));
+  });
+}
+
+let toastT;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+async function delRow(id){
+  if(!confirm('حذف هذا المسجّل نهائيًا؟')) return;
+  try{
+    const res = await fetch(API + '?id=' + encodeURIComponent(id), {
+      method:'DELETE', headers:{ 'x-admin-key': ADMIN_KEY }
+    });
+    if(!res.ok) throw new Error('status '+res.status);
+    ALL = ALL.filter(r=>String(r.id)!==String(id));
+    render();
+    toast('تم الحذف');
+  }catch(e){ toast('تعذّر الحذف'); }
 }
 
 function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function fmtDate(s){ if(!s) return ''; const d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('ar',{year:'numeric',month:'short',day:'numeric'}); }
 
-/* --- تصدير CSV (يفتح في Excel) --- */
-function exportCSV(){
+/* --- تصدير Excel مرتّب (جدول HTML يفتحه Excel بأعمدة نظيفة RTL) --- */
+function exportExcel(){
   const rows = currentRows();
-  const cols = [['id','#'],['first_name','الاسم'],['last_name','العائلة'],['age','العمر'],['gender','الجنس'],
-    ['phone','الهاتف'],['email','البريد'],['country','الدولة'],['city','المدينة'],['program','البرنامج'],['batch','الدفعة'],['created_at','التاريخ']];
-  const head = cols.map(c=>c[1]).join(',');
-  const body = rows.map(r=>cols.map(c=>`"${String(r[c[0]]??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const csv = '\uFEFF'+head+'\n'+body;   // BOM لدعم العربية في Excel
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const cols = [['التاريخ', r=>fmtDate(r.created_at)],
+    ['الاسم', r=>r.first_name], ['العائلة', r=>r.last_name],
+    ['الجنس', r=>r.gender], ['العمر', r=>r.age],
+    ['الهاتف', r=>r.phone], ['البريد', r=>r.email],
+    ['الدولة', r=>r.country], ['المدينة', r=>r.city],
+    ['البرنامج', r=>r.program], ['الدفعة', r=>r.batch]];
+  const head = '<tr>' + cols.map(c=>`<th style="background:#552e93;color:#fff;border:1px solid #999;padding:6px">${c[0]}</th>`).join('') + '</tr>';
+  const body = rows.map(r=>'<tr>' + cols.map(c=>{
+    const v = esc(String(c[1](r) ?? ''));
+    const isNum = c[0]==='العمر';
+    return `<td style="border:1px solid #ccc;padding:6px;mso-number-format:'\\@'">${v}</td>`;
+  }).join('') + '</tr>').join('');
+  const html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head>`+
+    `<body><table dir="rtl" border="1" style="border-collapse:collapse;font-family:Arial">${head}${body}</table></body></html>`;
+  const blob = new Blob(['\uFEFF'+html], {type:'application/vnd.ms-excel;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const tag = filterGender==='all' ? 'الكل' : filterGender;
-  a.download = `مسجلو-ملتقى-ماهر-${tag}.csv`;
+  a.download = `مسجلو-ملتقى-ماهر-${tag}.xls`;
   a.click();
 }
 </script>

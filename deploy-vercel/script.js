@@ -29,9 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn   = document.getElementById('submitBtn');
   const formError   = document.getElementById('formError');
   const success     = document.getElementById('success');
-  const countryEl   = document.getElementById('country');
-  const otherField  = document.getElementById('otherCountryField');
-  const otherInput  = document.getElementById('otherCountry');
   const pledge      = document.getElementById('pledge');
 
   /* ---------- المقدمة ---------- */
@@ -61,17 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- الدولة "أخرى" ---------- */
-  countryEl.addEventListener('change', () => {
-    const other = countryEl.value === 'أخرى';
-    otherField.hidden = !other;
-    if (!other) otherInput.value = '';
-    update();
-  });
-
   /* ---------- قراءة القيم ---------- */
   function values() {
-    const country = form.country.value.trim();
     return {
       firstName: form.firstName.value.trim(),
       lastName:  form.lastName.value.trim(),
@@ -79,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gender:    genderInput.value.trim(),
       phone:     form.phone.value.trim(),
       email:     form.email.value.trim(),
-      country:   country === 'أخرى' ? otherInput.value.trim() : country,
+      country:   form.country.value.trim(),
       city:      form.city.value.trim(),
       program:   form.program.value.trim(),
       batch:     form.batch.value.trim(),

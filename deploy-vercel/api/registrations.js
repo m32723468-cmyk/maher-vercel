@@ -9,6 +9,20 @@ export default async function handler(req, res) {
     return res.status(401).json({ ok: false, error: 'غير مصرّح' });
   }
 
+  // حذف مسجّل: DELETE /api/registrations?id=123
+  if (req.method === 'DELETE') {
+    const id = +req.query.id;
+    if (!id) return res.status(400).json({ ok: false, error: 'معرّف غير صالح' });
+    try {
+      await ensureTable();
+      await sql`DELETE FROM registrations WHERE id=${id}`;
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ ok: false, error: 'خطأ في الخادم' });
+    }
+  }
+
   try {
     await ensureTable();
     const { gender, program } = req.query;
