@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة التحكم — مسجّلو ملتقى ماهر</title>
+<style>
+  :root{
+    --v-900:#22143d; --v-800:#2f1a4d; --v-700:#46286f; --v-600:#552e93; --v-500:#6b45a8; --v-400:#8a5fc7;
+    --lilac:#e7d7f2; --lilac-soft:rgba(231,215,242,.72); --lilac-dim:rgba(231,215,242,.5);
+    --line:rgba(231,215,242,.16); --glass:rgba(231,215,242,.06);
+    --male:#7fb3ff; --female:#f3a9d0;
+    --head:'Segoe UI',Tahoma,system-ui,-apple-system,'Noto Sans Arabic',sans-serif;
+    --body:'Segoe UI',Tahoma,system-ui,-apple-system,'Noto Sans Arabic',sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    font-family:var(--body); color:var(--lilac); min-height:100vh;
+    background:radial-gradient(90% 60% at 85% -5%,rgba(138,95,199,.4),transparent 55%),
+      radial-gradient(80% 55% at 5% 105%,rgba(107,69,168,.35),transparent 55%),
+      linear-gradient(160deg,#2f1a4d,#22143d);
+    background-attachment:fixed;
+  }
+  ::selection{ background:rgba(231,215,242,.3); }
+  .wrap{ max-width:1180px; margin:0 auto; padding:clamp(20px,4vw,40px) clamp(14px,3vw,32px) 70px; }
+
+  /* الترويسة */
+  .top{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding-bottom:22px; border-bottom:1px solid var(--line); }
+  .top .logo{ width:52px; height:52px; flex:none; }
+  .top .logo svg path{ fill:var(--lilac); }
+  .top h1{ font-family:var(--head); font-size:clamp(22px,4vw,30px); margin:0; color:#fff; }
+  .top .sub{ font-size:12.5px; color:var(--lilac-dim); }
+  .top .spacer{ flex:1; }
+  .btn{ font-family:var(--body); font-size:13.5px; cursor:pointer; border-radius:12px 3px 12px 3px;
+    padding:11px 18px; border:1px solid var(--line); background:var(--glass); color:var(--lilac);
+    transition:all .2s ease; display:inline-flex; align-items:center; gap:7px; }
+  .btn:hover{ border-color:var(--v-400); }
+  .btn.solid{ background:var(--lilac); color:var(--v-600); border-color:var(--lilac); font-weight:700; }
+
+  /* الإحصائيات */
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:24px 0; }
+  .stat{ background:var(--glass); border:1px solid var(--line); border-radius:18px 5px 18px 5px; padding:18px 20px; }
+  .stat .n{ font-family:var(--head); font-size:34px; color:#fff; line-height:1; }
+  .stat .l{ font-size:12.5px; color:var(--lilac-dim); margin-top:8px; }
+  .stat.male .n{ color:var(--male); } .stat.female .n{ color:var(--female); }
+  .bar{ height:6px; border-radius:99px; background:rgba(231,215,242,.12); margin-top:12px; overflow:hidden; display:flex; }
+  .bar i{ display:block; height:100%; }
+  .bar .m{ background:var(--male); } .bar .f{ background:var(--female); }
+
+  /* أدوات التصفية */
+  .toolbar{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .tabs{ display:inline-flex; background:var(--glass); border:1px solid var(--line); border-radius:14px; padding:5px; gap:4px; }
+  .tab{ font-family:var(--body); font-size:13.5px; cursor:pointer; border:none; background:transparent;
+    color:var(--lilac-soft); padding:9px 18px; border-radius:10px; transition:all .2s ease; }
+  .tab.on{ background:var(--lilac); color:var(--v-600); font-weight:700; }
+  .tab .c{ font-size:11.5px; opacity:.7; margin-inline-start:5px; }
+  .search{ position:relative; flex:1; min-width:200px; }
+  .search input{ width:100%; padding:12px 16px; border-radius:12px; background:var(--glass);
+    border:1px solid var(--line); color:#fff; font-family:inherit; font-size:14px; outline:none; }
+  .search input::placeholder{ color:var(--lilac-dim); }
+  .search input:focus{ border-color:var(--v-400); }
+  .filters select{ padding:12px 14px; border-radius:12px; background:var(--glass); border:1px solid var(--line);
+    color:var(--lilac); font-family:inherit; font-size:13.5px; outline:none; cursor:pointer; }
+  .filters select option{ background:var(--v-800); color:var(--lilac); }
+
+  /* الجدول */
+  .tablewrap{ background:var(--glass); border:1px solid var(--line); border-radius:20px 6px 20px 6px; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  thead th{ background:rgba(231,215,242,.08); color:var(--lilac-soft); font-weight:400; text-align:right;
+    padding:14px 16px; white-space:nowrap; border-bottom:1px solid var(--line); font-family:var(--head); }
+  tbody td{ padding:13px 16px; border-bottom:1px solid rgba(231,215,242,.08); color:var(--lilac); }
+  tbody tr:last-child td{ border-bottom:0; }
+  tbody tr:hover{ background:rgba(231,215,242,.04); }
+  .g-pill{ display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:5px 11px; border-radius:99px; }
+  .g-pill.m{ background:rgba(127,179,255,.15); color:var(--male); }
+  .g-pill.f{ background:rgba(243,169,208,.15); color:var(--female); }
+  .g-pill .d{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+  td.ltr{ direction:ltr; text-align:right; font-size:12.5px; color:var(--lilac-soft); }
+  .empty{ text-align:center; padding:60px 20px; color:var(--lilac-dim); }
+  .empty .big{ font-family:var(--head); font-size:20px; color:var(--lilac-soft); margin-bottom:6px; }
+
+  /* شاشة المفتاح */
+  .gate{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(120% 130% at 50% 40%,#4d2c7e,#22143d); padding:20px; }
+  .gate[hidden]{ display:none; }
+  .gate-card{ width:100%; max-width:380px; background:linear-gradient(160deg,rgba(231,215,242,.12),rgba(231,215,242,.05));
+    border:1px solid rgba(231,215,242,.2); border-radius:26px 8px 26px 8px; padding:34px 30px; text-align:center;
+    backdrop-filter:blur(20px); }
+  .gate-card h2{ font-family:var(--head); font-size:24px; margin:14px 0 6px; color:#fff; }
+  .gate-card p{ font-size:13px; color:var(--lilac-dim); margin:0 0 22px; }
+  .gate-card .logo{ width:64px; height:64px; margin:0 auto; }
+  .gate-card .logo svg path{ fill:var(--lilac); }
+  .gate-card input{ width:100%; padding:14px 16px; border-radius:14px; background:rgba(231,215,242,.06);
+    border:1px solid rgba(231,215,242,.2); color:#fff; font-family:inherit; font-size:15px; text-align:center;
+    outline:none; margin-bottom:14px; }
+  .gate-card input:focus{ border-color:var(--lilac); }
+  .gate-card button{ width:100%; padding:15px; border:none; border-radius:14px; cursor:pointer;
+    font-family:var(--head); font-size:16px; font-weight:700; color:var(--v-600);
+    background:linear-gradient(180deg,#f3e9fb,#e7d7f2); }
+  .gate-err{ color:#f0a9c8; font-size:12.5px; min-height:16px; margin-bottom:8px; }
+  .demo-note{ display:inline-block; margin-top:10px; font-size:11.5px; color:var(--lilac-dim);
+    background:var(--glass); border:1px solid var(--line); border-radius:8px; padding:6px 12px; }
+
+  @media (max-width:680px){
+    .hide-sm{ display:none; }
+    thead th, tbody td{ padding:11px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== بوابة المفتاح ===== -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="logo">
+      <svg viewBox="46 20 135 190" xmlns="http://www.w3.org/2000/svg"><path d="M114.98,162.89c-4.21-2.76-8.85-5.03-13.56-6.82-7.91-3.01-16.05-5.38-24.04-8.17-5.38-1.88-10.65-4.07-14.92-8.04-2.96-2.75-4.69-6.13-5-10.18-.17-2.18.79-3.02,2.81-2.11,1.62.72,3.07,1.88,4.44,3.04,2.45,2.07,4.65,4.44,7.18,6.4,4.02,3.12,8.28,3.14,12.1-.2,2.1-1.82,3.62-4.31,5.36-6.54.39-.49.61-1.12.94-1.74,3.52,1.8,6.3,4.16,8.56,7.16,1.53,2.04,2.08,1.99,3.16-.35,3.29-7.13,5.55-14.57,6.58-22.37.72-5.45-.97-9.96-5.54-13.14-2.47-1.73-5.05-3.32-7.7-4.76-3.51-1.91-7.22-3.43-10.67-5.43-4.02-2.34-6.82-5.81-7.8-10.47-.35-1.65-.28-3.39-.4-5.14-4.97,8.94-6.27,17.31,2.88,24.8-1.58,4.56-3.34,8.94-4.59,13.45-1.26,4.56.31,8.03,4.27,10.62,1.37.89,2.84,1.62,4.3,2.35,1.22.61,2.49,1.13,3.85,1.74-.32.27-.48.45-.68.58-3.65,2.34-7.45,2.13-11.24-.93-2.68-2.17-5.08-4.67-7.66-6.97-4.26-3.8-7.03-3.34-9.33,1.91-1.71,3.92-3.14,8-4.25,12.13-1.34,4.96-.57,9.77,2.6,13.97,2.65,3.54,6.25,5.98,10.29,7.53,7.04,2.72,14.19,5.19,21.33,7.63,7.39,2.52,14.86,4.81,21.51,9.06,7.47,4.77,12.05,11.42,12.43,20.38.18,4.23-.54,8.5-.83,12.43.07-.07.19-.24.28-.43,2.72-6.07,4.6-12.36,4.65-19.07.07-9.37-3.42-17.13-11.31-22.32ZM94.43,106.85c8.35,2.95,12.11,10.7,9.45,19.76-2.19-2.09-4.05-4.56-6.52-6.02-2.81-1.68-3.45-3.35-2.73-6.47.52-2.31-.1-4.88-.2-7.27ZM78.69,107.17c2.05-1.16,3.95-.69,5.69.64,2.72,2.08,4.27,4.99,5.52,8.18-4.63-.43-10.46-5.03-11.21-8.82Z"></path><path d="M176.08,104.08c-1.39-1.07-2.79-2.12-4.23-3.13-3.62-2.53-7.38-4.88-10.87-7.58-3.89-2.99-7.2-6.5-7.34-11.91-.15-.04-.3-.07-.45-.1-.83,2.09-1.59,4.21-2.48,6.27-1.49,3.46-1.06,6.7.82,9.88.28.47.37,1.31.13,1.77-7.01,13.37-18.16,21.41-32.61,25.14-2.55.67-3.31.11-3.09-2.52.32-3.98.9-7.93,1.26-11.91.58-6.64.1-13.17-2.22-19.51-2.99-8.12-8.42-14.49-14.57-20.33-6.1-5.8-12.53-11.27-18.3-17.39-8.94-9.48-12.16-20.98-10.22-33.87.42-2.81,1.09-5.59,1.64-8.39-.45.33-.74.71-.88,1.14-1.3,3.9-2.86,7.73-3.78,11.72-2.5,10.82-2.05,21.41,3.5,31.37,3.23,5.79,7.75,10.49,12.57,14.96,5.51,5.1,11.18,10.05,16.39,15.44,8.56,8.86,12.93,19.5,12.06,31.97-.33,4.71-1.01,9.39-1.4,14.09-.28,3.41.62,4.17,3.84,3.25,12.75-3.66,23.54-10.08,30.43-21.92.89-1.53,1.91-2.98,2.87-4.46.08.95-.16,1.74-.39,2.54-1.75,5.97-.79,8.84,4.21,12.58.77.58,1.58,1.13,2.39,1.66,3.14,2.05,6.37,3.98,9.43,6.15,3.53,2.51,7.03,5.11,8.39,9.8.31-.52.52-.82.66-1.14,3.05-6.93,5.63-14.02,7.28-21.43,1.3-5.82-.35-10.51-5.04-14.14ZM176.68,129.22c-3.26-5.67-8.52-8.64-13.52-11.92-2.33-1.52-4.72-2.96-6.93-4.65-4.89-3.75-5.48-6.71-2.88-11.88,5.36,3.73,10.77,7.47,16.15,11.26,1.28.9,2.48,1.93,3.68,2.95,4.43,3.79,5.43,8.48,3.5,14.24Z"></path></svg>
+    </div>
+    <h2>لوحة التحكم</h2>
+    <p>أدخل كود الدخول للاطّلاع على المسجّلين</p>
+    <div class="gate-err" id="gateErr"></div>
+    <input id="keyInput" type="password" placeholder="كود الدخول" autocomplete="off">
+    <button id="keyBtn">دخول</button>
+  </div>
+</div>
+
+<!-- ===== اللوحة ===== -->
+<div class="wrap">
+  <div class="top">
+    <div class="logo">
+      <svg viewBox="46 20 135 190" xmlns="http://www.w3.org/2000/svg"><path d="M114.98,162.89c-4.21-2.76-8.85-5.03-13.56-6.82-7.91-3.01-16.05-5.38-24.04-8.17-5.38-1.88-10.65-4.07-14.92-8.04-2.96-2.75-4.69-6.13-5-10.18-.17-2.18.79-3.02,2.81-2.11,1.62.72,3.07,1.88,4.44,3.04,2.45,2.07,4.65,4.44,7.18,6.4,4.02,3.12,8.28,3.14,12.1-.2,2.1-1.82,3.62-4.31,5.36-6.54.39-.49.61-1.12.94-1.74,3.52,1.8,6.3,4.16,8.56,7.16,1.53,2.04,2.08,1.99,3.16-.35,3.29-7.13,5.55-14.57,6.58-22.37.72-5.45-.97-9.96-5.54-13.14-2.47-1.73-5.05-3.32-7.7-4.76-3.51-1.91-7.22-3.43-10.67-5.43-4.02-2.34-6.82-5.81-7.8-10.47-.35-1.65-.28-3.39-.4-5.14-4.97,8.94-6.27,17.31,2.88,24.8-1.58,4.56-3.34,8.94-4.59,13.45-1.26,4.56.31,8.03,4.27,10.62,1.37.89,2.84,1.62,4.3,2.35,1.22.61,2.49,1.13,3.85,1.74-.32.27-.48.45-.68.58-3.65,2.34-7.45,2.13-11.24-.93-2.68-2.17-5.08-4.67-7.66-6.97-4.26-3.8-7.03-3.34-9.33,1.91-1.71,3.92-3.14,8-4.25,12.13-1.34,4.96-.57,9.77,2.6,13.97,2.65,3.54,6.25,5.98,10.29,7.53,7.04,2.72,14.19,5.19,21.33,7.63,7.39,2.52,14.86,4.81,21.51,9.06,7.47,4.77,12.05,11.42,12.43,20.38.18,4.23-.54,8.5-.83,12.43.07-.07.19-.24.28-.43,2.72-6.07,4.6-12.36,4.65-19.07.07-9.37-3.42-17.13-11.31-22.32ZM94.43,106.85c8.35,2.95,12.11,10.7,9.45,19.76-2.19-2.09-4.05-4.56-6.52-6.02-2.81-1.68-3.45-3.35-2.73-6.47.52-2.31-.1-4.88-.2-7.27ZM78.69,107.17c2.05-1.16,3.95-.69,5.69.64,2.72,2.08,4.27,4.99,5.52,8.18-4.63-.43-10.46-5.03-11.21-8.82Z"></path><path d="M176.08,104.08c-1.39-1.07-2.79-2.12-4.23-3.13-3.62-2.53-7.38-4.88-10.87-7.58-3.89-2.99-7.2-6.5-7.34-11.91-.15-.04-.3-.07-.45-.1-.83,2.09-1.59,4.21-2.48,6.27-1.49,3.46-1.06,6.7.82,9.88.28.47.37,1.31.13,1.77-7.01,13.37-18.16,21.41-32.61,25.14-2.55.67-3.31.11-3.09-2.52.32-3.98.9-7.93,1.26-11.91.58-6.64.1-13.17-2.22-19.51-2.99-8.12-8.42-14.49-14.57-20.33-6.1-5.8-12.53-11.27-18.3-17.39-8.94-9.48-12.16-20.98-10.22-33.87.42-2.81,1.09-5.59,1.64-8.39-.45.33-.74.71-.88,1.14-1.3,3.9-2.86,7.73-3.78,11.72-2.5,10.82-2.05,21.41,3.5,31.37,3.23,5.79,7.75,10.49,12.57,14.96,5.51,5.1,11.18,10.05,16.39,15.44,8.56,8.86,12.93,19.5,12.06,31.97-.33,4.71-1.01,9.39-1.4,14.09-.28,3.41.62,4.17,3.84,3.25,12.75-3.66,23.54-10.08,30.43-21.92.89-1.53,1.91-2.98,2.87-4.46.08.95-.16,1.74-.39,2.54-1.75,5.97-.79,8.84,4.21,12.58.77.58,1.58,1.13,2.39,1.66,3.14,2.05,6.37,3.98,9.43,6.15,3.53,2.51,7.03,5.11,8.39,9.8.31-.52.52-.82.66-1.14,3.05-6.93,5.63-14.02,7.28-21.43,1.3-5.82-.35-10.51-5.04-14.14ZM176.68,129.22c-3.26-5.67-8.52-8.64-13.52-11.92-2.33-1.52-4.72-2.96-6.93-4.65-4.89-3.75-5.48-6.71-2.88-11.88,5.36,3.73,10.77,7.47,16.15,11.26,1.28.9,2.48,1.93,3.68,2.95,4.43,3.79,5.43,8.48,3.5,14.24Z"></path></svg>
+    </div>
+    <div>
+      <h1>مسجّلو الملتقى</h1>
+      <div class="sub">لوحة تحكم فريق ملتقى ماهر الإلكتروني</div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="refreshBtn">↻ تحديث</button>
+    <button class="btn solid" id="exportBtn">⇩ تصدير Excel/CSV</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">إجمالي المسجّلين</div>
+      <div class="bar"><i class="m" id="barM" style="width:50%"></i><i class="f" id="barF" style="width:50%"></i></div>
+    </div>
+    <div class="stat male"><div class="n" id="stMale">0</div><div class="l">الذكور</div></div>
+    <div class="stat female"><div class="n" id="stFemale">0</div><div class="l">الإناث</div></div>
+    <div class="stat"><div class="n" id="stToday">0</div><div class="l">تسجيلات اليوم</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="tab on" data-g="all">الكل <span class="c" id="cAll">0</span></button>
+      <button class="tab" data-g="ذكر">ذكور <span class="c" id="cMale">0</span></button>
+      <button class="tab" data-g="أنثى">إناث <span class="c" id="cFemale">0</span></button>
+    </div>
+    <div class="filters">
+      <select id="programFilter">
+        <option value="">كل البرامج</option>
+        <option value="فتية">فتية</option>
+        <option value="المراقي">المراقي</option>
+        <option value="بناء المقرئ">بناء المقرئ</option>
+      </select>
+    </div>
+    <div class="search"><input id="searchInput" type="search" placeholder="بحث بالاسم أو البريد أو الهاتف أو المدينة…"></div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم الكامل</th>
+          <th>الجنس</th>
+          <th class="hide-sm">العمر</th>
+          <th class="hide-sm">البرنامج</th>
+          <th class="hide-sm">الدفعة</th>
+          <th class="hide-sm">الدولة / المدينة</th>
+          <th>الهاتف</th>
+          <th class="hide-sm">البريد</th>
+          <th class="hide-sm">التاريخ</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="emptyState" hidden>
+      <div class="big">لا توجد نتائج</div>
+      <div>لا يوجد مسجّلون مطابقون لهذا التصفية بعد.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   لوحة تحكم مسجّلي ملتقى ماهر
+   - تتصل بـ GET /api/registrations (نفس الخادم) عبر مفتاح الإدارة.
+   - الفلترة (ذكور/إناث)، البحث، التصدير CSV — كلها تعمل في المتصفح.
+   - إن تعذّر الاتصال بالخادم يعرض بيانات تجريبية للمعاينة.
+   ============================================================ */
+/* ============ الإعدادات (عدّلها عند النشر) ============ */
+// كود الدخول للوحة — يدخل به فريقك
+const ACCESS_CODE = 'maher14*2-=sd';
+// عنوان الخادم: اتركه '' إذا كانت اللوحة على نفس خادم الـAPI،
+// أو ضع رابط خادمك، مثل: 'https://api.maher.com'
+const API_BASE = '';
+// مفتاح الـAPI (ADMIN_KEY في .env) — يُملأ عند النشر إن لزم
+const ADMIN_KEY = 'maher14*2-=sd';
+/* ==================================================== */
+
+const API = API_BASE + '/api/registrations';
+let ALL = [];
+let filterGender = 'all';
+
+const $ = (id) => document.getElementById(id);
+
+/* --- بيانات تجريبية للمعاينة بدون خادم --- */
+const DEMO = [
+  { id:8, first_name:'سارة', last_name:'الأحمد', age:24, gender:'أنثى', phone:'+966501112233', email:'sara@example.com', country:'السعودية', city:'الرياض', program:'المراقي', batch:'الدفعة الثانية', created_at:new Date().toISOString() },
+  { id:7, first_name:'ماهر', last_name:'العبدالله', age:29, gender:'ذكر', phone:'+966502223344', email:'maher@example.com', country:'السعودية', city:'جدة', program:'فتية', batch:'الدفعة الأولى', created_at:new Date().toISOString() },
+  { id:6, first_name:'ليلى', last_name:'حسن', age:21, gender:'أنثى', phone:'+201002223344', email:'layla@example.com', country:'مصر', city:'القاهرة', program:'بناء المقرئ', batch:'الدفعة الأولى', created_at:'2026-07-27T10:00:00Z' },
+  { id:5, first_name:'يوسف', last_name:'الطيب', age:33, gender:'ذكر', phone:'+212600112233', email:'youssef@example.com', country:'المغرب', city:'الرباط', program:'المراقي', batch:'الدفعة الثالثة', created_at:'2026-07-26T09:00:00Z' },
+  { id:4, first_name:'نور', last_name:'الكواري', age:19, gender:'أنثى', phone:'+974501234', email:'noor@example.com', country:'قطر', city:'الدوحة', program:'فتية', batch:'الدفعة الثانية', created_at:'2026-07-25T14:00:00Z' },
+  { id:3, first_name:'عبدالله', last_name:'المطيري', age:27, gender:'ذكر', phone:'+965999888', email:'abdullah@example.com', country:'الكويت', city:'حولي', program:'بناء المقرئ', batch:'الدفعة الأولى', created_at:'2026-07-24T14:00:00Z' },
+];
+
+/* --- البوابة: كود الدخول --- */
+$('keyBtn').addEventListener('click', enter);
+$('keyInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter') enter(); });
+function enter(){
+  const code = $('keyInput').value;
+  if (code !== ACCESS_CODE){
+    $('gateErr').textContent = 'كود الدخول غير صحيح';
+    $('keyInput').value = '';
+    return;
+  }
+  $('gateErr').textContent = '';
+  sessionStorage.setItem('maherAuthed', '1');
+  $('gate').hidden = true;
+  load();
+}
+// لو سبق الدخول في نفس الجلسة، ادخل مباشرة
+if (sessionStorage.getItem('maherAuthed') === '1') { $('gate').hidden = true; }
+
+/* --- جلب البيانات --- */
+async function load(){
+  try {
+    const res = await fetch(API, { headers: { 'x-admin-key': ADMIN_KEY } });
+    if (!res.ok) throw new Error('status '+res.status);
+    const data = await res.json();
+    ALL = data.rows || [];
+  } catch (e) {
+    // تعذّر الاتصال — استخدم البيانات التجريبية
+    ALL = DEMO;
+    console.info('وضع المعاينة: بيانات تجريبية (لا يوجد خادم متصل)');
+  }
+  render();
+}
+if (sessionStorage.getItem('maherAuthed') === '1') load();
+
+/* --- التصفية + العرض --- */
+$('refreshBtn').addEventListener('click', load);
+$('exportBtn').addEventListener('click', exportCSV);
+$('searchInput').addEventListener('input', render);
+$('programFilter').addEventListener('change', render);
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    filterGender = t.dataset.g;
+    render();
+  });
+});
+
+function currentRows(){
+  const q = $('searchInput').value.trim().toLowerCase();
+  const prog = $('programFilter').value;
+  return ALL.filter(r=>{
+    if (filterGender !== 'all' && r.gender !== filterGender) return false;
+    if (prog && r.program !== prog) return false;
+    if (q){
+      const hay = [r.first_name,r.last_name,r.email,r.phone,r.city,r.country].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function render(){
+  const males = ALL.filter(r=>r.gender==='ذكر').length;
+  const females = ALL.filter(r=>r.gender==='أنثى').length;
+  const today = new Date().toISOString().slice(0,10);
+  const todayCount = ALL.filter(r=>(r.created_at||'').slice(0,10)===today).length;
+
+  $('stTotal').textContent = ALL.length;
+  $('stMale').textContent = males;
+  $('stFemale').textContent = females;
+  $('stToday').textContent = todayCount;
+  $('cAll').textContent = ALL.length;
+  $('cMale').textContent = males;
+  $('cFemale').textContent = females;
+  const tot = males+females || 1;
+  $('barM').style.width = (males/tot*100)+'%';
+  $('barF').style.width = (females/tot*100)+'%';
+
+  const rows = currentRows();
+  const tb = $('tbody');
+  tb.innerHTML = '';
+  $('emptyState').hidden = rows.length !== 0;
+
+  rows.forEach(r=>{
+    const isM = r.gender==='ذكر';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.id ?? ''}</td>
+      <td>${esc(r.first_name)} ${esc(r.last_name)}</td>
+      <td><span class="g-pill ${isM?'m':'f'}"><span class="d"></span>${esc(r.gender)}</span></td>
+      <td class="hide-sm">${r.age ?? ''}</td>
+      <td class="hide-sm">${esc(r.program||'')}</td>
+      <td class="hide-sm">${esc(r.batch||'')}</td>
+      <td class="hide-sm">${esc(r.country||'')} — ${esc(r.city||'')}</td>
+      <td class="ltr">${esc(r.phone||'')}</td>
+      <td class="hide-sm ltr">${esc(r.email||'')}</td>
+      <td class="hide-sm">${fmtDate(r.created_at)}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function fmtDate(s){ if(!s) return ''; const d=new Date(s); return isNaN(d)?s:d.toLocaleDateString('ar',{year:'numeric',month:'short',day:'numeric'}); }
+
+/* --- تصدير CSV (يفتح في Excel) --- */
+function exportCSV(){
+  const rows = currentRows();
+  const cols = [['id','#'],['first_name','الاسم'],['last_name','العائلة'],['age','العمر'],['gender','الجنس'],
+    ['phone','الهاتف'],['email','البريد'],['country','الدولة'],['city','المدينة'],['program','البرنامج'],['batch','الدفعة'],['created_at','التاريخ']];
+  const head = cols.map(c=>c[1]).join(',');
+  const body = rows.map(r=>cols.map(c=>`"${String(r[c[0]]??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = '\uFEFF'+head+'\n'+body;   // BOM لدعم العربية في Excel
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const tag = filterGender==='all' ? 'الكل' : filterGender;
+  a.download = `مسجلو-ملتقى-ماهر-${tag}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
