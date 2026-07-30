@@ -1,9 +1,0 @@
-{
-  "name": "maher-multaqa-vercel",
-  "version": "1.0.0",
-  "description": "استمارة ولوحة تحكم ملتقى ماهر — Vercel Serverless + Postgres",
-  "type": "module",
-  "dependencies": {
-    "@vercel/postgres": "^0.10.0"
-  }
-}
